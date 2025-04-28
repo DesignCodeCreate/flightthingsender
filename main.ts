@@ -17,17 +17,30 @@ input.onButtonPressed(Button.AB, function () {
     }
 })
 
+input.onButtonPressed(Button.A, function () {
+    if (processes["flight"]) {
+        if (!(leftPower >= 100 || rightPower >= 100)) {
+            leftPower += 10; rightPower += 10;
+        }
+    }
+})
+
 input.onButtonPressed(Button.B, function () {
     // Lift off
     if (!processes["liftOff"]) {
         processes["liftOff"] = true;
         radio.sendNumber(2);
+    } else {
+        // Stabilise
+        
+        // Run this when ready
+        processes["flight"] = true;
     }
-})
-
-input.onButtonPressed(Button.A, function () {
-    // Stabilise and fly
-
+    
+    if (processes["flight"]) {
+        if (!(leftPower <= 0 || rightPower <= 0))
+        leftPower -= 10; rightPower -= 10;
+    }
 })
 
 function setup() {
@@ -65,6 +78,23 @@ let UP_Gyro = -90
 let DOWN_Gyro = 90
 
 
+let leftPower = 60;
+let rightPower = 60;
+
 basic.forever(function () {
-    serial.writeLine("" + ((input.rotation(Rotation.Pitch)).toString()))
+    if (processes["flight"]) {
+        let pitch = input.rotation(Rotation.Pitch);
+        let pitchStr = "0#" + pitch.toString();
+        radio.sendString(pitchStr);
+
+        let roll = input.rotation(Rotation.Roll);
+        let rollStr = "1#" + pitch.toString();
+        radio.sendString(rollStr);
+    }
+
+    let leftPowerStr = "2#" + leftPower;
+    radio.sendString(leftPowerStr);
+
+    let rightPowerStr = "3#" + rightPower;
+    radio.sendString(rightPowerStr);
 })
