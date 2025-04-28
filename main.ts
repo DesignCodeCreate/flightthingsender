@@ -32,9 +32,13 @@ input.onButtonPressed(Button.B, function () {
         radio.sendNumber(2);
     } else {
         // Stabilise
-        
+        radio.sendNumber(5);
+        // Wait for ping
+
+
         // Run this when ready
         processes["flight"] = true;
+        radio.sendNumber(6);
     }
     
     if (processes["flight"]) {
