@@ -6,6 +6,12 @@ let processes = {
     "flight": false,
 }
 
+radio.onReceivedString(function (str) {
+    if (str == "stabilise_complete") {
+        control.raiseEvent(EventBusSource.MICROBIT_ID_RADIO, EventBusValue.MES_DEVICE_INCOMING_CALL)
+    }
+})
+
 input.onButtonPressed(Button.AB, function () {
     // Initialise
     if (!processes["init"]) {
@@ -34,7 +40,7 @@ input.onButtonPressed(Button.B, function () {
         // Stabilise
         radio.sendNumber(5);
         // Wait for ping
-
+        control.waitForEvent(EventBusSource.MICROBIT_ID_RADIO, EventBusValue.MES_DEVICE_INCOMING_CALL)
 
         // Run this when ready
         processes["flight"] = true;
