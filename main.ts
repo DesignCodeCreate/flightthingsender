@@ -6,9 +6,19 @@ let processes = {
     "flight": false,
 }
 
-radio.onReceivedString(function (str) {
-    if (str == "stabilise_complete") {
-        control.raiseEvent(EventBusSource.MICROBIT_ID_RADIO, EventBusValue.MES_DEVICE_INCOMING_CALL)
+// Radio Logic
+radio.onReceivedNumber(function (receivedNumber) {
+    serial.writeLine(receivedNumber.toString());
+    switch (receivedNumber) {
+        case 0: {
+            stabiliseDone = true;
+            if (processes["liftOff"] && !processes["flight"]) {
+                processes["flight"] = true;
+                radio.sendNumber(6);
+                showDebugLeds(3);
+            }
+            break;
+        }
     }
 })
 
@@ -16,6 +26,8 @@ input.onButtonPressed(Button.AB, function () {
     // Initialise
     if (!processes["init"]) {
         processes["init"] = true;
+        radio.setGroup(RADIO_GROUP);
+        showDebugLeds(0);
         radio.sendNumber(1);
     } else {
         processes["deadlock"] = true;
@@ -36,15 +48,17 @@ input.onButtonPressed(Button.B, function () {
     if (!processes["liftOff"]) {
         processes["liftOff"] = true;
         radio.sendNumber(2);
+        showDebugLeds(1);
     } else {
-        // Stabilise
-        radio.sendNumber(5);
-        // Wait for ping
-        control.waitForEvent(EventBusSource.MICROBIT_ID_RADIO, EventBusValue.MES_DEVICE_INCOMING_CALL)
+        if (!processes["flight"]) {
+            // Stabilise
+            radio.sendNumber(5);
 
-        // Run this when ready
-        processes["flight"] = true;
-        radio.sendNumber(6);
+            processes["flight"] = true;
+            radio.sendNumber(6);
+            showDebugLeds(3);
+        }
+
     }
     
     if (processes["flight"]) {
@@ -54,43 +68,22 @@ input.onButtonPressed(Button.B, function () {
     }
 })
 
-function setup() {
-    radio.setGroup(RADIO_GROUP)
-    basic.showLeds(`
-        . # # . .
-        . # . . .
-        . # # # .
-        . # . # .
-        . # # # .
-        `)
-    basic.showLeds(`
-        . . . . #
-        . . . # .
-        # . # . .
-        . # . . .
-        . . . . .
-        `)
-    basic.showLeds(`
-        . . . . .
-        . . . . .
-        . . . . .
-        . . . . .
-        . . . . .
-        `)
-}
 
 let UP_Servo = 0
 let RADIO_GROUP = 6
 let HORIZONTAL = 0
-RADIO_GROUP = 1
 UP_Servo = 90
 let DOWN_Servo = -90
 let UP_Gyro = -90
 let DOWN_Gyro = 90
-
+let stabiliseDone = false;
 
 let leftPower = 60;
 let rightPower = 60;
+
+function setup() {
+    radio.setGroup(RADIO_GROUP);
+}
 
 basic.forever(function () {
     if (processes["flight"]) {
@@ -109,3 +102,43 @@ basic.forever(function () {
     let rightPowerStr = "3#" + rightPower;
     radio.sendString(rightPowerStr);
 })
+
+
+function showDebugLeds(code: number) {
+    switch (code) {
+        // Initialisation
+        case 0: {
+        basic.showNumber(6);
+        
+        basic.showLeds(`
+            . . . . #
+            . . . # .
+            # . # . .
+            . # . . .
+            . . . . .
+        `)
+
+        basic.clearScreen();
+
+        }; break;
+
+        // Liftoff
+        case 1: {
+            basic.showArrow(ArrowNames.North)
+            basic.clearScreen();
+        }; break;
+
+        // Stabilisation
+        case 2: {
+            basic.showString("Stable");
+            basic.clearScreen();
+        }; break;
+
+        // Flight Pattern
+
+        case 3: {
+            basic.showArrow(ArrowNames.East);
+            basic.clearScreen();
+        }; break;
+    }
+}
