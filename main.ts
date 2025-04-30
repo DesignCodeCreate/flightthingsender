@@ -48,8 +48,9 @@ input.onButtonPressed(Button.B, function () {
     }
     
     if (processes["flight"]) {
-        if (!(leftPower <= 0 || rightPower <= 0))
-        leftPower -= 10; rightPower -= 10;
+        if (!(leftPower <= 0 || rightPower <= 0)) {
+            leftPower -= 10; rightPower -= 10;
+        }
     }
 })
 
