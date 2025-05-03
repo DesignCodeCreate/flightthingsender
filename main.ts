@@ -8,14 +8,14 @@ let processes = {
 
 // Radio Logic
 radio.onReceivedNumber(function (receivedNumber) {
-    serial.writeLine(receivedNumber.toString());
     switch (receivedNumber) {
         case 0: {
             stabiliseDone = true;
             if (processes["liftOff"] && !processes["flight"]) {
+                showDebugLeds(3);
                 processes["flight"] = true;
                 radio.sendNumber(6);
-                showDebugLeds(3);
+                showTick();
             }
             break;
         }
@@ -25,10 +25,10 @@ radio.onReceivedNumber(function (receivedNumber) {
 input.onButtonPressed(Button.AB, function () {
     // Initialise
     if (!processes["init"]) {
-        processes["init"] = true;
-        radio.setGroup(RADIO_GROUP);
         showDebugLeds(0);
+        processes["init"] = true;
         radio.sendNumber(1);
+        showTick();
     } else {
         processes["deadlock"] = true;
         radio.sendNumber(4);
@@ -46,17 +46,19 @@ input.onButtonPressed(Button.A, function () {
 input.onButtonPressed(Button.B, function () {
     // Lift off
     if (!processes["liftOff"]) {
+        showDebugLeds(1);
         processes["liftOff"] = true;
         radio.sendNumber(2);
-        showDebugLeds(1);
+        showTick();
     } else {
         if (!processes["flight"]) {
             // Stabilise
+            showDebugLeds(3);
             radio.sendNumber(5);
 
             processes["flight"] = true;
             radio.sendNumber(6);
-            showDebugLeds(3);
+            showTick();
         }
 
     }
@@ -87,58 +89,59 @@ function setup() {
 
 basic.forever(function () {
     if (processes["flight"]) {
-        let pitch = input.rotation(Rotation.Pitch);
-        let pitchStr = "0#" + pitch.toString();
-        radio.sendString(pitchStr);
-
-        let roll = input.rotation(Rotation.Roll);
-        let rollStr = "1#" + pitch.toString();
-        radio.sendString(rollStr);
+        radio.sendValue("pitch", input.rotation(Rotation.Pitch));
+        radio.sendValue("roll", input.rotation(Rotation.Roll));
     }
-
-    let leftPowerStr = "2#" + leftPower;
-    radio.sendString(leftPowerStr);
-
-    let rightPowerStr = "3#" + rightPower;
-    radio.sendString(rightPowerStr);
-})
+  
+}) 
 
 
 function showDebugLeds(code: number) {
     switch (code) {
-        // Initialisation
+        // Init
         case 0: {
-        basic.showNumber(6);
-        
-        basic.showLeds(`
-            . . . . #
-            . . . # .
-            # . # . .
-            . # . . .
-            . . . . .
-        `)
-
-        basic.clearScreen();
-
+            basic.showNumber(6);
         }; break;
 
-        // Liftoff
+        // liftOff
         case 1: {
-            basic.showArrow(ArrowNames.North)
+            basic.showArrow(ArrowNames.North);
             basic.clearScreen();
         }; break;
 
-        // Stabilisation
+        // stabilisation
         case 2: {
-            basic.showString("Stable");
+            basic.showIcon(IconNames.Pitchfork);
             basic.clearScreen();
         }; break;
 
-        // Flight Pattern
-
+        // Flight pattern
         case 3: {
             basic.showArrow(ArrowNames.East);
             basic.clearScreen();
         }; break;
+
+        // Land
+        case 4: {
+            basic.showArrow(ArrowNames.South);
+            basic.clearScreen();
+        }; break;
+
+        // Deadlock
+        case 5: {
+            basic.showIcon(IconNames.Skull);
+            basic.clearScreen();
+        }; break;
     }
+}
+
+function showTick() {
+    basic.showLeds(`
+        . . . . #
+        . . . # .
+        # . # . .
+        . # . . .
+        . . . . .
+    `);
+    basic.clearScreen();
 }
