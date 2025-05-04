@@ -14,7 +14,7 @@ radio.onReceivedNumber(function (receivedNumber) {
             if (processes["liftOff"] && !processes["flight"]) {
                 showDebugLeds(3);
                 processes["flight"] = true;
-                radio.sendNumber(6);
+                radio.sendValue("flight", 1);
                 showTick();
             }
             break;
@@ -27,11 +27,11 @@ input.onButtonPressed(Button.AB, function () {
     if (!processes["init"]) {
         showDebugLeds(0);
         processes["init"] = true;
-        radio.sendNumber(1);
+        radio.sendValue("init", 1);
         showTick();
     } else {
         processes["deadlock"] = true;
-        radio.sendNumber(4);
+        radio.sendValue("deadlock", 1);
     }
 })
 
@@ -48,16 +48,16 @@ input.onButtonPressed(Button.B, function () {
     if (!processes["liftOff"]) {
         showDebugLeds(1);
         processes["liftOff"] = true;
-        radio.sendNumber(2);
+        radio.sendValue("liftOff", 1);
         showTick();
     } else {
         if (!processes["flight"]) {
             // Stabilise
             showDebugLeds(3);
-            radio.sendNumber(5);
+            radio.sendValue("stabilise", 1);
 
             processes["flight"] = true;
-            radio.sendNumber(6);
+            radio.sendValue("flight", 1);
             showTick();
         }
 
@@ -70,14 +70,7 @@ input.onButtonPressed(Button.B, function () {
     }
 })
 
-
-let UP_Servo = 0
 let RADIO_GROUP = 6
-let HORIZONTAL = 0
-UP_Servo = 90
-let DOWN_Servo = -90
-let UP_Gyro = -90
-let DOWN_Gyro = 90
 let stabiliseDone = false;
 
 let leftPower = 60;
